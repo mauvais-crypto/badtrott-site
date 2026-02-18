@@ -5,114 +5,92 @@
   <title>Suivi de réparation – BadTrott</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Supabase CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <!-- ✅ BON CDN pour navigateur (UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
   <style>
-    body {
+    body{
       font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: white;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
+      background:#0f172a;color:#fff;margin:0;
+      display:flex;align-items:center;justify-content:center;height:100vh;
     }
-
-    .box {
-      background: #111827;
-      padding: 30px;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 400px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-    }
-
-    h2 {
-      margin-bottom: 20px;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 15px;
-      border: none;
-      border-radius: 6px;
-      background: #1f2937;
-      color: white;
-      font-size: 16px;
-    }
-
-    button {
-      width: 100%;
-      padding: 14px;
-      background: #22c55e;
-      border: none;
-      border-radius: 6px;
-      color: black;
-      font-weight: bold;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #16a34a;
-    }
-
-    .result {
-      margin-top: 20px;
-      padding: 15px;
-      background: #1f2937;
-      border-radius: 6px;
-      display: none;
-    }
+    .box{background:#111827;padding:30px;border-radius:10px;width:90%;max-width:420px;text-align:center}
+    input{width:100%;padding:12px;margin:10px 0;border:0;border-radius:8px;background:#1f2937;color:#fff;font-size:16px}
+    button{width:100%;padding:14px;border:0;border-radius:8px;background:#22c55e;color:#000;font-weight:700;font-size:16px}
+    .result{display:none;margin-top:15px;padding:12px;background:#1f2937;border-radius:8px;text-align:left;white-space:pre-wrap}
+    .muted{opacity:.8;font-size:13px;margin-top:10px}
   </style>
 </head>
+
 <body>
+  <div class="box">
+    <h2>Suivi de réparation</h2>
 
-<div class="box">
-  <h2>Suivi de réparation</h2>
-  <input id="nom" placeholder="Nom du client" />
-  <input id="numero" placeholder="Numéro de réparation" />
-  <button onclick="rechercher()">Voir le statut</button>
+    <input id="nom" placeholder="Nom du client" />
+    <input id="numero" placeholder="Numéro de réparation" />
+    <button id="btn">Voir le statut</button>
 
-  <div id="resultat" class="result"></div>
-</div>
+    <div id="resultat" class="result"></div>
+    <div class="muted">Astuce: essaie “Dupont” + “TEST001”</div>
+  </div>
 
-<script>
-  const supabase = window.supabase.createClient(
-    "https://cdvsurdnjqffvatoslhl.supabase.co",
-    "sb_publishable_jXSsq_Hbtty8WM98exy3Lg_180VDF_4"
-  );
-
-  async function rechercher() {
-    const nom = document.getElementById("nom").value;
-    const numero = document.getElementById("numero").value;
-
-    const { data, error } = await supabase
-      .from("reparations")
-      .select("*")
-      .eq("nom_client", nom)
-      .eq("numero_reparation", numero)
-      .single();
-
+  <script>
+    // ✅ Vérif Supabase chargé
     const box = document.getElementById("resultat");
-    box.style.display = "block";
-
-    if (error || !data) {
-      box.innerHTML = "Aucune réparation trouvée.";
-      return;
+    function show(msg){
+      box.style.display = "block";
+      box.textContent = msg;
     }
 
-    box.innerHTML = `
-      <strong>Statut :</strong> ${data.statut || "En cours"}<br>
-      <strong>Détails :</strong> ${data.details || "Aucun détail"}
-    `;
-  }
-</script>
+    if (!window.supabase) {
+      show("ERREUR: Supabase n'est pas chargé (window.supabase est undefined).");
+      throw new Error("Supabase non chargé");
+    }
 
+    const supa = window.supabase.createClient(
+      "https://cdvsurdnjqffvatoslhl.supabase.co",
+      "sb_publishable_jXSsq_Hbtty8WM98exy3Lg_180VDF_4"
+    );
+
+    async function rechercher() {
+      const nom = document.getElementById("nom").value.trim();
+      const numero = document.getElementById("numero").value.trim();
+
+      if (!nom || !numero) {
+        show("Merci de remplir le nom + le numéro.");
+        return;
+      }
+
+      show("Recherche en cours...");
+
+      try {
+        const { data, error } = await supa
+          .from("reparations")
+          .select("*")
+          .eq("nom_client", nom)
+          .eq("numero_reparation", numero)
+          .maybeSingle(); // évite certains crashs si rien trouvé
+
+        if (error) {
+          show("ERREUR Supabase:\n" + error.message);
+          return;
+        }
+
+        if (!data) {
+          show("Aucune réparation trouvée.\nVérifie l'orthographe (majuscules/espaces).");
+          return;
+        }
+
+        const statut = data.statut ?? "En cours";
+        const details = data.details ?? "Aucun détail";
+
+        show(`Statut : ${statut}\nDétails : ${details}`);
+      } catch (e) {
+        show("ERREUR JS:\n" + (e?.message || e));
+      }
+    }
+
+    document.getElementById("btn").addEventListener("click", rechercher);
+  </script>
 </body>
 </html>
