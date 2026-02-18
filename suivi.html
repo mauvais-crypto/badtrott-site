@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Suivi de réparation - BadTrott</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .box {
+      background: #111827;
+      padding: 30px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    input {
+      background: #1f2937;
+      color: white;
+    }
+
+    button {
+      background: #22c55e;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #1f2937;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Suivi de réparation</h2>
+    <input id="nom" placeholder="Nom du client" />
+    <input id="numero" placeholder="Numéro de réparation" />
+    <button onclick="rechercher()">Voir le statut</button>
+
+    <div id="resultat" class="result" style="display:none;"></div>
+  </div>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      "https://cdvsurdnjqffvatoslhl.supabase.co",
+      "sb_publishable_jXSsq_Hbtty8WM98exy3Lg_180VDF_4"
+    );
+
+    async function rechercher() {
+      const nom = document.getElementById("nom").value;
+      const numero = document.getElementById("numero").value;
+
+      const { data, error } = await supabase
+        .from("reparations")
+        .select("*")
+        .eq("nom_client", nom)
+        .eq("numero_reparation", numero)
+        .single();
+
+      const box = document.getElementById("resultat");
+      box.style.display = "block";
+
+      if (error || !data) {
+        box.innerHTML = "Aucune réparation trouvée.";
+        return;
+      }
+
+      box.innerHTML = `
+        <strong>Statut :</strong> ${data.statut || "En cours"}<br>
+        <strong>Détails :</strong> ${data.details || "Aucun détail"}
+      `;
+    }
+  </script>
+</body>
+</html>
