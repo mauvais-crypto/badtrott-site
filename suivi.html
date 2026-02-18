@@ -2,9 +2,10 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Suivi de réparation - BadTrott</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Suivi de réparation – BadTrott</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+  <!-- Supabase CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
   <style>
@@ -27,27 +28,38 @@
       width: 90%;
       max-width: 400px;
       text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
     }
 
-    input, button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
+    h2 {
+      margin-bottom: 20px;
     }
 
     input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: none;
+      border-radius: 6px;
       background: #1f2937;
       color: white;
+      font-size: 16px;
     }
 
     button {
+      width: 100%;
+      padding: 14px;
       background: #22c55e;
+      border: none;
+      border-radius: 6px;
       color: black;
       font-weight: bold;
+      font-size: 16px;
       cursor: pointer;
+    }
+
+    button:hover {
+      background: #16a34a;
     }
 
     .result {
@@ -55,49 +67,52 @@
       padding: 15px;
       background: #1f2937;
       border-radius: 6px;
+      display: none;
     }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h2>Suivi de réparation</h2>
-    <input id="nom" placeholder="Nom du client" />
-    <input id="numero" placeholder="Numéro de réparation" />
-    <button onclick="rechercher()">Voir le statut</button>
 
-    <div id="resultat" class="result" style="display:none;"></div>
-  </div>
+<div class="box">
+  <h2>Suivi de réparation</h2>
+  <input id="nom" placeholder="Nom du client" />
+  <input id="numero" placeholder="Numéro de réparation" />
+  <button onclick="rechercher()">Voir le statut</button>
 
-  <script>
-    const supabase = window.supabase.createClient(
-      "https://cdvsurdnjqffvatoslhl.supabase.co",
-      "sb_publishable_jXSsq_Hbtty8WM98exy3Lg_180VDF_4"
-    );
+  <div id="resultat" class="result"></div>
+</div>
 
-    async function rechercher() {
-      const nom = document.getElementById("nom").value;
-      const numero = document.getElementById("numero").value;
+<script>
+  const supabase = window.supabase.createClient(
+    "https://cdvsurdnjqffvatoslhl.supabase.co",
+    "sb_publishable_jXSsq_Hbtty8WM98exy3Lg_180VDF_4"
+  );
 
-      const { data, error } = await supabase
-        .from("reparations")
-        .select("*")
-        .eq("nom_client", nom)
-        .eq("numero_reparation", numero)
-        .single();
+  async function rechercher() {
+    const nom = document.getElementById("nom").value;
+    const numero = document.getElementById("numero").value;
 
-      const box = document.getElementById("resultat");
-      box.style.display = "block";
+    const { data, error } = await supabase
+      .from("reparations")
+      .select("*")
+      .eq("nom_client", nom)
+      .eq("numero_reparation", numero)
+      .single();
 
-      if (error || !data) {
-        box.innerHTML = "Aucune réparation trouvée.";
-        return;
-      }
+    const box = document.getElementById("resultat");
+    box.style.display = "block";
 
-      box.innerHTML = `
-        <strong>Statut :</strong> ${data.statut || "En cours"}<br>
-        <strong>Détails :</strong> ${data.details || "Aucun détail"}
-      `;
+    if (error || !data) {
+      box.innerHTML = "Aucune réparation trouvée.";
+      return;
     }
-  </script>
+
+    box.innerHTML = `
+      <strong>Statut :</strong> ${data.statut || "En cours"}<br>
+      <strong>Détails :</strong> ${data.details || "Aucun détail"}
+    `;
+  }
+</script>
+
 </body>
 </html>
